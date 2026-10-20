@@ -2,80 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Models\Publisher;
-use App\Services\PublisherService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
 use Inertia\Response;
 
 class PublisherController extends Controller
 {
-    
-
-    public function __construct(
-        private readonly PublisherService $publisherservice
-    ){}    
-
-    public function index(Request $req): Response
+    public function index(): Response
     {
-        $search = $req->search;
-        $publishers = $this->publisherservice->paginate(
-            is_string($search) ? $search : null , 10
-        );
-
-        return Inertia::render('publisher\index',[
-            'publisher' => $publishers,
-            'filters' => [
-                'search' => is_string($search) ? $search : '',
-            ]
+        return Inertia::render('publisher/index', [
+            'records' => Publisher::query()->latest()->get(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(): Response
     {
-        return Inertia::render('publish\create');
+        return Inertia::render('publisher/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        Publisher::create($request->validate([
+            'publisher_name' => ['required', 'string', 'max:255'],
+        ]));
+
+        return to_route('publishers.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Publisher $publisher)
+    public function edit(Publisher $publisher): Response
     {
-        //
+        return Inertia::render('publisher/edit', ['record' => $publisher]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Publisher $publisher)
+    public function update(Request $request, Publisher $publisher): RedirectResponse
     {
-        //
+        $publisher->update($request->validate([
+            'publisher_name' => ['required', 'string', 'max:255'],
+        ]));
+
+        return to_route('publishers.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Publisher $publisher)
+    public function destroy(Publisher $publisher): RedirectResponse
     {
-        //
-    }
+        $publisher->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Publisher $publisher)
-    {
-        //
+        return to_route('publishers.index');
     }
 }

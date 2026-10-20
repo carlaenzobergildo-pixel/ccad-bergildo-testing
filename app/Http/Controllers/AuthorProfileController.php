@@ -2,74 +2,74 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
-use Illuminate\Http\Request;
+use App\Models\Author;
 use App\Models\AuthorProfile;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class AuthorProfileController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $authorProfiles = AuthorProfile::select(['id', 'author_id', 'bio'])->with([
-            'author:id,publisher_id,name',
-        ])->get();
-
-        dd($authorProfiles);
-
-        return Inertia::render('author-profile/index', [
-            'authorProfiles' => $authorProfiles
+        return Inertia::render('author_profiles/index', [
+            'records' => AuthorProfile::with('author:id,name')->latest()->get(),
         ]);
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
-        //
+        return Inertia::render('author_profiles/create', ['options' => $this->options()]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        AuthorProfile::create($this->validated($request));
+
+        return to_route('author_profiles.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(AuthorProfile $authorProfile)
+    public function edit(AuthorProfile $authorProfile): Response
     {
-        //
+        return Inertia::render('author_profiles/edit', [
+            'record' => $authorProfile,
+            'options' => $this->options(),
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(AuthorProfile $authorProfile)
+    public function update(Request $request, AuthorProfile $authorProfile): RedirectResponse
     {
-        //
+        $authorProfile->update($this->validated($request, $authorProfile));
+
+        return to_route('author_profiles.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, AuthorProfile $authorProfile)
+    public function destroy(AuthorProfile $authorProfile): RedirectResponse
     {
-        //
+        $authorProfile->delete();
+
+        return to_route('author_profiles.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(AuthorProfile $authorProfile)
+    private function validated(Request $request, ?AuthorProfile $authorProfile = null): array
     {
-        //
+        return $request->validate([
+            'author_id' => [
+                'required',
+                'integer',
+                Rule::exists('authors', 'id'),
+                Rule::unique('author_profiles', 'author_id')->ignore($authorProfile?->id),
+            ],
+            'bio' => ['nullable', 'string'],
+        ]);
+    }
+
+    private function options(): array
+    {
+        return [
+            'authors' => Author::query()->orderBy('name')->get(['id', 'name'])->map(fn (Author $author) => ['id' => $author->id, 'label' => $author->name]),
+        ];
     }
 }

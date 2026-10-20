@@ -2,74 +2,66 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
+use App\Models\Supplier;
 use App\Models\Warehouse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class WarehouseController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $warehouses = Warehouse::select(['id', 'supplier_id', 'location'])->with([
-            'supplier:id,supplier_name',
-            'manager:id,warehouse_id,mngr_name',
-        ])->get();
-        
-        dd($warehouses);
-
         return Inertia::render('warehouse/index', [
-            'warehouses' => $warehouses
+            'records' => Warehouse::with('supplier:id,supplier_name')->latest()->get(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
-        //
+        return Inertia::render('warehouse/create', ['options' => $this->options()]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        Warehouse::create($this->validated($request));
+
+        return to_route('warehouses.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Warehouse $warehouse)
+    public function edit(Warehouse $warehouse): Response
     {
-        //
+        return Inertia::render('warehouse/edit', ['record' => $warehouse, 'options' => $this->options()]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Warehouse $warehouse)
+    public function update(Request $request, Warehouse $warehouse): RedirectResponse
     {
-        //
+        $warehouse->update($this->validated($request));
+
+        return to_route('warehouses.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Warehouse $warehouse)
+    public function destroy(Warehouse $warehouse): RedirectResponse
     {
-        //
+        $warehouse->delete();
+
+        return to_route('warehouses.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Warehouse $warehouse)
+    private function validated(Request $request): array
     {
-        //
+        return $request->validate([
+            'supplier_id' => ['required', 'integer', Rule::exists('suppliers', 'id')],
+            'location' => ['required', 'string', 'max:255'],
+        ]);
+    }
+
+    private function options(): array
+    {
+        return [
+            'suppliers' => Supplier::query()->orderBy('supplier_name')->get(['id', 'supplier_name'])->map(fn (Supplier $supplier) => ['id' => $supplier->id, 'label' => $supplier->supplier_name]),
+        ];
     }
 }

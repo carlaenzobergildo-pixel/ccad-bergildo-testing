@@ -2,74 +2,55 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Models\Product;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ProductController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $products = Product::select(['id', 'prod_name', 'price'])->with([
-            'reviews:id,user_id,reviewable_id,reviewable_type,stars,comment',
-        ])->get();
-        
-        dd($products);
-        
-        return Inertia::render('product/index', [
-            'products' => $products
+        return Inertia::render('product/index', ['records' => Product::query()->latest()->get()]);
+    }
+
+    public function create(): Response
+    {
+        return Inertia::render('product/create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        Product::create($this->validated($request));
+
+        return to_route('products.index');
+    }
+
+    public function edit(Product $product): Response
+    {
+        return Inertia::render('product/edit', ['record' => $product]);
+    }
+
+    public function update(Request $request, Product $product): RedirectResponse
+    {
+        $product->update($this->validated($request));
+
+        return to_route('products.index');
+    }
+
+    public function destroy(Product $product): RedirectResponse
+    {
+        $product->delete();
+
+        return to_route('products.index');
+    }
+
+    private function validated(Request $request): array
+    {
+        return $request->validate([
+            'prod_name' => ['required', 'string', 'max:255'],
+            'price' => ['required', 'numeric', 'min:0'],
         ]);
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     * Display the specified resource.
-     */
-    public function show(Product $product)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Product $product)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Product $product)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Product $product)
-    {
-        //
     }
 }

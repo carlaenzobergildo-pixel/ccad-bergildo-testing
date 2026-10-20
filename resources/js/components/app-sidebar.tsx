@@ -4,7 +4,7 @@ import { NavUser } from '@/components/nav-user';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar';
 import { type NavItem } from '@/types';
 import { Link } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Library, Feather,  BookOpenText } from 'lucide-react';
+import { BookOpen, BookOpenText, Feather, Folder, LayoutGrid, Library, Package, Star, Tag, Truck, Users, Warehouse } from 'lucide-react';
 import AppLogo from './app-logo';
 
 const mainNavItems: NavItem[] = [
@@ -27,7 +27,47 @@ const mainNavItems: NavItem[] = [
         title: 'Publishers',
         url: '/publishers',
         icon: BookOpenText,
-    }
+    },
+    {
+        title: 'Genres',
+        url: '/genres',
+        icon: Tag,
+    },
+    {
+        title: 'Author profiles',
+        url: '/author_profiles',
+        icon: Users,
+    },
+    {
+        title: 'Book genres',
+        url: '/book_genres',
+        icon: BookOpen,
+    },
+    {
+        title: 'Managers',
+        url: '/managers',
+        icon: Users,
+    },
+    {
+        title: 'Products',
+        url: '/products',
+        icon: Package,
+    },
+    {
+        title: 'Reviews',
+        url: '/reviews',
+        icon: Star,
+    },
+    {
+        title: 'Warehouses',
+        url: '/warehouses',
+        icon: Warehouse,
+    },
+    {
+        title: 'Suppliers',
+        url: '/suppliers',
+        icon: Truck,
+    },
 ];
 
 const footerNavItems: NavItem[] = [

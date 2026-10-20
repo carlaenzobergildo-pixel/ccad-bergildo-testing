@@ -2,74 +2,51 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Models\Genre;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class GenreController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $genres = Genre::select(['id', 'genre_name'])->with([
-            'books:id,title,slug,isbn,price,description,image,author_id,publisher_id',  
-        ])->get();
-
-        dd($genres);
-
-        return Inertia::render('genre/index', [
-            'genres' => $genres
-        ]);
-        //
+        return Inertia::render('genre/index', ['records' => Genre::query()->latest()->get()]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
-        //
+        return Inertia::render('genre/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        Genre::create($request->validate([
+            'genre_name' => ['required', 'string', 'max:255'],
+        ]));
+
+        return to_route('genres.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Genre $genre)
+    public function edit(Genre $genre): Response
     {
-        //
+        return Inertia::render('genre/edit', ['record' => $genre]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Genre $genre)
+    public function update(Request $request, Genre $genre): RedirectResponse
     {
-        //
+        $genre->update($request->validate([
+            'genre_name' => ['required', 'string', 'max:255'],
+        ]));
+
+        return to_route('genres.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Genre $genre)
+    public function destroy(Genre $genre): RedirectResponse
     {
-        //
-    }
+        $genre->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Genre $genre)
-    {
-        //
+        return to_route('genres.index');
     }
 }

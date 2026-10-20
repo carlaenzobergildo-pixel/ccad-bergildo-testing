@@ -2,74 +2,53 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
 use App\Models\Supplier;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class SupplierController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $suppliers = Supplier::select(['id', 'supplier_name'])->with([
-            'warehouses:id,supplier_id,location',
-        ])->get();
-        
-        dd($suppliers);
-
         return Inertia::render('supplier/index', [
-            'suppliers' => $suppliers
+            'records' => Supplier::query()->latest()->get(),
         ]);
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
-        //
+        return Inertia::render('supplier/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        Supplier::create($request->validate([
+            'supplier_name' => ['required', 'string', 'max:255'],
+        ]));
+
+        return to_route('suppliers.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Supplier $supplier)
+    public function edit(Supplier $supplier): Response
     {
-        //
+        return Inertia::render('supplier/edit', ['record' => $supplier]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Supplier $supplier)
+    public function update(Request $request, Supplier $supplier): RedirectResponse
     {
-        //
+        $supplier->update($request->validate([
+            'supplier_name' => ['required', 'string', 'max:255'],
+        ]));
+
+        return to_route('suppliers.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Supplier $supplier)
+    public function destroy(Supplier $supplier): RedirectResponse
     {
-        //
-    }
+        $supplier->delete();
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Supplier $supplier)
-    {
-        //
+        return to_route('suppliers.index');
     }
 }

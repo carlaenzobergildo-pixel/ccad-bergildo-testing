@@ -2,74 +2,82 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
+use App\Models\Book;
+use App\Models\Product;
 use App\Models\Review;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class ReviewController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $reviews = Review::select(['id', 'user_id', 'reviewable_id', 'reviewable_type', 'stars', 'comment'])->with([
-            'user:id,name,email',
-            'reviewable',
-        ])->get();
-
-        dd($reviews);
-
         return Inertia::render('review/index', [
-            'reviews' => $reviews
+            'records' => Review::with(['user:id,name', 'reviewable'])->latest()->get(),
         ]);
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
-        //
+        return Inertia::render('review/create');
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        $validated = $this->validated($request);
+        $this->ensureReviewableExists($validated['reviewable_type'], $validated['reviewable_id']);
+
+        Review::create([
+            ...$validated,
+            'user_id' => $request->user()->id,
+        ]);
+
+        return to_route('reviews.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Review $review)
+    public function edit(Review $review): Response
     {
-        //
+        return Inertia::render('review/edit', ['record' => $review]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Review $review)
+    public function update(Request $request, Review $review): RedirectResponse
     {
-        //
+        $validated = $this->validated($request);
+        $this->ensureReviewableExists($validated['reviewable_type'], $validated['reviewable_id']);
+        $review->update($validated);
+
+        return to_route('reviews.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, Review $review)
+    public function destroy(Review $review): RedirectResponse
     {
-        //
+        $review->delete();
+
+        return to_route('reviews.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(Review $review)
+    private function validated(Request $request): array
     {
-        //
+        return $request->validate([
+            'reviewable_type' => ['required', Rule::in([Book::class, Product::class])],
+            'reviewable_id' => ['required', 'integer', 'min:1'],
+            'stars' => ['required', 'integer', 'between:1,5'],
+            'comment' => ['nullable', 'string'],
+        ]);
+    }
+
+    private function ensureReviewableExists(string $type, int $id): void
+    {
+        $exists = $type === Book::class ? Book::whereKey($id)->exists() : Product::whereKey($id)->exists();
+
+        if (!$exists) {
+            throw ValidationException::withMessages([
+                'reviewable_id' => 'Select an existing item.',
+            ]);
+        }
     }
 }

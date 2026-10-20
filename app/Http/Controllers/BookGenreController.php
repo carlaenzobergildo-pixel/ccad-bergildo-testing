@@ -2,75 +2,71 @@
 
 namespace App\Http\Controllers;
 
-use Inertia\Inertia;
+use App\Models\Book;
 use App\Models\BookGenre;
+use App\Models\Genre;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Inertia\Inertia;
+use Inertia\Response;
 
 class BookGenreController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
+    public function index(): Response
     {
-        $bookGenres = BookGenre::select(['id', 'book_id', 'genre_id'])->with([
-            'book:id,title,slug,isbn,price,description,image,author_id,publisher_id',
-            'genre:id,genre_name',
-        ])->get();
-
-        dd($bookGenres);
-
-        return Inertia::render('book-genre/index', [
-            'bookGenres' => $bookGenres
+        return Inertia::render('book_genres/index', [
+            'records' => BookGenre::with(['book:id,title', 'genre:id,genre_name'])->latest()->get(),
         ]);
-        //
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
+    public function create(): Response
     {
-        //
+        return Inertia::render('book_genres/create', ['options' => $this->options()]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
-        //
+        BookGenre::create($this->validated($request));
+
+        return to_route('book_genres.index');
     }
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(BookGenre $bookGenre)
+    public function edit(BookGenre $bookGenre): Response
     {
-        //
+        return Inertia::render('book_genres/edit', [
+            'record' => $bookGenre,
+            'options' => $this->options(),
+        ]);
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(BookGenre $bookGenre)
+    public function update(Request $request, BookGenre $bookGenre): RedirectResponse
     {
-        //
+        $bookGenre->update($this->validated($request));
+
+        return to_route('book_genres.index');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, BookGenre $bookGenre)
+    public function destroy(BookGenre $bookGenre): RedirectResponse
     {
-        //
+        $bookGenre->delete();
+
+        return to_route('book_genres.index');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(BookGenre $bookGenre)
+    private function validated(Request $request): array
     {
-        //
+        return $request->validate([
+            'book_id' => ['required', 'integer', Rule::exists('books', 'id')],
+            'genre_id' => ['required', 'integer', Rule::exists('genres', 'id')],
+        ]);
+    }
+
+    private function options(): array
+    {
+        return [
+            'books' => Book::query()->orderBy('title')->get(['id', 'title'])->map(fn (Book $book) => ['id' => $book->id, 'label' => $book->title]),
+            'genres' => Genre::query()->orderBy('genre_name')->get(['id', 'genre_name'])->map(fn (Genre $genre) => ['id' => $genre->id, 'label' => $genre->genre_name]),
+        ];
     }
 }

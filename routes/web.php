@@ -23,17 +23,17 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('dashboard');
     })->name('dashboard');
 
-    Route::resource('books', BookController::class);
-    Route::resource('authors', AuthorController::class);
-    Route::resource('publishers', PublisherController::class);
-    Route::resource('genres', GenreController::class);
-    Route::resource('author_profiles', AuthorProfileController::class);
-    Route::resource('book_genres', BookGenreController::class);
-    Route::resource('managers', ManagerController::class);
-    Route::resource('products', ProductController::class);
-    Route::resource('reviews', ReviewController::class);
-    Route::resource('warehouses', WarehouseController::class);
-    Route::resource('suppliers', SupplierController::class);
+    Route::resource('books', BookController::class)->except('show');
+    Route::resource('authors', AuthorController::class)->except('show');
+    Route::resource('publishers', PublisherController::class)->except('show');
+    Route::resource('genres', GenreController::class)->except('show');
+    Route::resource('author_profiles', AuthorProfileController::class)->except('show');
+    Route::resource('book_genres', BookGenreController::class)->except('show');
+    Route::resource('managers', ManagerController::class)->except('show');
+    Route::resource('products', ProductController::class)->except('show');
+    Route::resource('reviews', ReviewController::class)->except('show');
+    Route::resource('warehouses', WarehouseController::class)->except('show');
+    Route::resource('suppliers', SupplierController::class)->except('show');
 });
 
 require __DIR__.'/settings.php';
